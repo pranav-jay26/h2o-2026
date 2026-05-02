@@ -1,0 +1,25 @@
+[project]
+name = "h2o-backend"
+version = "0.1.0"
+description = "FastAPI sidecar for H2O Predictive Water Intelligence (Shasta Lake MVP)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.5",
+    "uvicorn[standard]>=0.32.1",
+    "pandas>=2.2.3",
+    "numpy>=2.1.3",
+    "httpx>=0.28.1",
+    "python-dateutil>=2.9.0.post0",
+    "pydantic>=2.10.3",
+]
+
+[tool.uv]
+dev-dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
