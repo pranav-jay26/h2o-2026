@@ -33,5 +33,3 @@ Open <http://localhost:3000>.
 - Postgres / TimescaleDB: swap `backend/app/data_sources/csv_loader.py::load_history` behind a repo interface.
 - Scenario planner: add `backend/app/routers/scenarios.py` and a panel on the dashboard.
 - Multi-basin: register new `Basin`s in `backend/app/config.py`; the frontend already keys off `/api/basins`.
-
-See `PROMPT.md` for the full PRD.
