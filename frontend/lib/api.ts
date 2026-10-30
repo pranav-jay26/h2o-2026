@@ -84,11 +84,113 @@ export type Forecast = {
   metrics: Record<Metric, { latest: number; seven_day: number; monthly: ForecastPoint[] }>;
 };
 
+export type ReleaseLevel = "normal" | "watch" | "elevated";
+
+export type ReleaseDriver = {
+  key: string;
+  label: string;
+  weight: "low" | "medium" | "high";
+};
+
+export type ReleaseRisk = {
+  level: ReleaseLevel;
+  score: number;
+  summary: string;
+  drivers: ReleaseDriver[];
+  thresholds: Record<string, number>;
+};
+
+export type MetBrief = {
+  observed_30d_precip_in: number;
+  pct_of_normal_precip: number | null;
+  temp_anomaly_c: number;
+};
+
+export type ForecastBrief = {
+  next_7d_total_in: number;
+  forecast_temp_c_avg: number | null;
+};
+
+export type ReservoirMarker = {
+  id: string;
+  name: string;
+  watershed: string;
+  cdec_station: string;
+  lat: number;
+  lon: number;
+  capacity_af: number;
+  current: {
+    percent_capacity: number | null;
+    storage_af: number | null;
+    as_of: string | null;
+    source: string;
+  };
+  risk_level: RiskLevel | "unknown";
+  release_risk: ReleaseRisk;
+  met: MetBrief | null;
+  forecast: ForecastBrief | null;
+  has_history: boolean;
+};
+
+export const RELEASE_COLORS: Record<ReleaseLevel, string> = {
+  normal: "#10b981",
+  watch: "#f59e0b",
+  elevated: "#ef4444",
+};
+
+export type ReservoirList = {
+  as_of: string;
+  count: number;
+  reservoirs: ReservoirMarker[];
+};
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`${path} → ${res.status}`);
   return (await res.json()) as T;
 }
+
+export type UserAreaLevel = "likely" | "possible" | "unlikely" | "out_of_zone";
+
+export type Resolution = {
+  kind: "zip" | "city";
+  zip: string;
+  city: string | null;
+  state_id: string | null;
+  lat: number;
+  lon: number;
+  population: number | null;
+  matched_zip_count: number;
+};
+
+export type ReleaseEstimate = {
+  query: string;
+  as_of: string;
+  resolution: Resolution;
+  nearest: {
+    id: string;
+    name: string;
+    watershed: string;
+    distance_mi: number;
+    release_level: ReleaseLevel;
+    release_score: number;
+    drivers: ReleaseDriver[];
+  };
+  user_score: number;
+  user_level: UserAreaLevel;
+  distance_factor: number;
+  summary: string;
+  nearby: Array<{
+    id: string;
+    name: string;
+    watershed: string;
+    distance_mi: number;
+    release_level: ReleaseLevel;
+    release_score: number;
+    factor: number;
+  }>;
+  thresholds: { near_miles: number; far_miles: number };
+};
 
 export const api = {
   snapshot: (basin: string) => get<Snapshot>(`/api/snapshot/${basin}`),
@@ -96,6 +198,9 @@ export const api = {
     get<Timeseries>(`/api/timeseries/${basin}/${metric}`),
   forecast: (basin: string, horizonMonths = 6) =>
     get<Forecast>(`/api/forecast/${basin}?horizon_months=${horizonMonths}`),
+  reservoirs: () => get<ReservoirList>(`/api/reservoirs`),
+  releaseEstimate: (q: string) =>
+    get<ReleaseEstimate>(`/api/release-estimate?q=${encodeURIComponent(q)}`),
 };
 
 export const RISK_COLORS: Record<RiskLevel, string> = {

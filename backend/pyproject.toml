@@ -12,6 +12,7 @@ dependencies = [
     "httpx>=0.28.1",
     "python-dateutil>=2.9.0.post0",
     "pydantic>=2.10.3",
+    "mcp>=1.2.0",
 ]
 
 [tool.uv]

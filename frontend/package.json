@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "next": "^15.5.15",
+    "plotly.js-dist-min": "2.35.2",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
     "recharts": "2.13.3"

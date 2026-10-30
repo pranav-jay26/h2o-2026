@@ -13,6 +13,14 @@ npm run dev
 Defaults to <http://localhost:3000>. The backend is expected at
 <http://localhost:8000> — override with `NEXT_PUBLIC_API_BASE` if needed.
 
+### Map tiles
+
+The reservoir map uses Plotly's `scattermapbox` with CartoDB's
+`carto-darkmatter` tiles — free, no auth, no token required. To switch to a
+Mapbox-hosted style (`streets`, `outdoors`, `light`, `dark`, `satellite`,
+`satellite-streets`), set the `style` field and pass `accesstoken` in
+`components/ReservoirMap.tsx`.
+
 ## Layout
 
 - `app/page.tsx` — single dashboard route. Server component; fetches snapshot,

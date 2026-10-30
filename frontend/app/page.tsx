@@ -1,8 +1,11 @@
 import { AlertsList } from "@/components/AlertsList";
 import { ForecastStrip } from "@/components/ForecastStrip";
+import MapPanel from "@/components/MapPanel";
 import { MetricCard } from "@/components/MetricCard";
+import { ReleasePanel } from "@/components/ReleasePanel";
 import { RiskBadge } from "@/components/RiskBadge";
 import { TrendChart } from "@/components/TrendChart";
+import { ZipReleaseProbe } from "@/components/ZipReleaseProbe";
 import { METRIC_LABELS, api, type Metric } from "@/lib/api";
 
 const BASIN = "shasta";
@@ -16,14 +19,15 @@ const UNITS: Record<Metric, string> = {
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  let snapshot, forecast, snow, precip, reservoir;
+  let snapshot, forecast, snow, precip, reservoir, reservoirList;
   try {
-    [snapshot, forecast, snow, precip, reservoir] = await Promise.all([
+    [snapshot, forecast, snow, precip, reservoir, reservoirList] = await Promise.all([
       api.snapshot(BASIN),
       api.forecast(BASIN, 6),
       api.timeseries(BASIN, "snowpack"),
       api.timeseries(BASIN, "precip"),
       api.timeseries(BASIN, "reservoir"),
+      api.reservoirs(),
     ]);
   } catch (err) {
     return <BackendDown error={String(err)} />;
@@ -36,23 +40,46 @@ export default async function Home() {
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-widest text-slate-500">
-            Predictive Water Intelligence · {snapshot.basin.watershed}
+            Predictive Water Intelligence · North Central Valley
           </div>
-          <h1 className="mt-1 text-3xl font-semibold text-slate-100">{snapshot.basin.name}</h1>
+          <h1 className="mt-1 text-3xl font-semibold text-slate-100">Reservoir Network</h1>
+          <div className="mt-1 text-xs text-slate-500">
+            Hover any marker for live storage and risk. Detailed view below is anchored on{" "}
+            {snapshot.basin.name}.
+          </div>
+        </div>
+        <FreshnessLine
+          csv={snapshot.data_freshness.csv_latest}
+          cdec={snapshot.data_freshness.cdec_live}
+          cdecStatus={snapshot.data_freshness.cdec_status}
+        />
+      </header>
+
+      <section className="mb-8">
+        <MapPanel reservoirs={reservoirList.reservoirs} />
+      </section>
+
+      <section className="mb-8">
+        <ZipReleaseProbe />
+      </section>
+
+      <section className="mb-8">
+        <ReleasePanel reservoirs={reservoirList.reservoirs} />
+      </section>
+
+      <section className="mb-4 flex flex-wrap items-end justify-between gap-3 border-t border-slate-800 pt-6">
+        <div>
+          <div className="text-xs uppercase tracking-widest text-slate-500">
+            {snapshot.basin.watershed}
+          </div>
+          <h2 className="mt-1 text-2xl font-semibold text-slate-100">{snapshot.basin.name}</h2>
           <div className="mt-1 text-xs text-slate-500">
             CDEC station {snapshot.basin.cdec_station} · capacity{" "}
             {(snapshot.basin.capacity_af / 1_000_000).toFixed(2)}M AF
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <RiskBadge level={snapshot.risk.level} score={snapshot.risk.score} />
-          <FreshnessLine
-            csv={snapshot.data_freshness.csv_latest}
-            cdec={snapshot.data_freshness.cdec_live}
-            cdecStatus={snapshot.data_freshness.cdec_status}
-          />
-        </div>
-      </header>
+        <RiskBadge level={snapshot.risk.level} score={snapshot.risk.score} />
+      </section>
 
       {snapshot.risk.explanations.length > 0 && (
         <div className="mb-4 rounded-xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
@@ -103,9 +130,10 @@ export default async function Home() {
       </section>
 
       <footer className="mt-10 text-[11px] text-slate-600">
-        Sources: CDEC sensor 15 (live reservoir storage) · `data/challenge.csv` (historical
-        monthly snapshots). Forecast: seasonal-naive baseline. Not for operational allocation
-        decisions.
+        Sources: CDEC sensor 15 (live reservoir storage) · NASA POWER daily-point + monthly
+        climatology · NOAA NWS gridpoint QPF · `data/challenge.csv` (historical monthly
+        snapshots). Forecast: seasonal-naive baseline. Release likelihood is a transparent
+        rule-based heuristic and is not a substitute for DWR/USBR notices.
       </footer>
     </main>
   );
